@@ -11,31 +11,43 @@ class CallDetectionService {
   static const List<Map<String, String>> _sampleTranscripts = [
     {
       'text': 'Selamat pagi, saya dari Bank Negara. Akaun anda ada masalah dan perlu dikemas kini segera. Sila berikan nombor IC anda untuk pengesahan.',
+      'title': 'Bank Impersonation Scam',
+      'description': 'Caller claims to be from Bank Negara and requests personal information',
       'category': 'bankImpersonation',
       'risk': 'scam'
     },
     {
       'text': 'Tahniah! Anda telah menangi Toyota Vios dalam cabutan bertuah kami. Sila bayar yuran proses RM500 untuk mengclaim hadiah anda.',
+      'title': 'Lottery Scam',
+      'description': 'Fake lottery win requiring upfront payment for processing fees',
       'category': 'lotteryScam',
       'risk': 'scam'
     },
     {
       'text': 'Hello, saya dari Microsoft. Komputer anda ada virus dan kami perlu akses remote untuk fix. Segera call balik nombor ini.',
+      'title': 'Tech Support Scam',
+      'description': 'Fake technical support requesting remote access to computer',
       'category': 'techSupport',
       'risk': 'highRisk'
     },
     {
       'text': 'Anak anda ada dengan kami. Kalau mahu anak anda selamat, sila hantar RM50,000 ke akaun ini dalam masa 2 jam.',
+      'title': 'Kidnapping Scam',
+      'description': 'False kidnapping threat demanding immediate ransom payment',
       'category': 'kidnapping',
       'risk': 'scam'
     },
     {
       'text': 'Saya encik Ahmad dari LHDN. Anda ada tunggakan cukai dan perlu bayar sekarang atau akan ditangkap.',
+      'title': 'Tax Authority Impersonation',
+      'description': 'Caller claims to be from LHDN threatening arrest for unpaid taxes',
       'category': 'governmentImpersonation',
       'risk': 'scam'
     },
     {
       'text': 'Hai, saya nak tanya pasal promotion bank kita. Ada interest rendah untuk personal loan. Berminat tak?',
+      'title': 'Legitimate Telemarketing',
+      'description': 'Normal promotional call about banking services (safe example)',
       'category': 'other',
       'risk': 'safe'
     }
@@ -71,15 +83,15 @@ class CallDetectionService {
         category = ScamCategory.bankImpersonation;
         confidenceScore = 0.95;
         warningSigns.addAll([
-          'Mengaku dari bank',
-          'Mengancam akaun bank',
-          'Meminta maklumat peribadi'
+          'Claims to be from bank',
+          'Threatens bank account',
+          'Requests personal information'
         ]);
         recommendedActions.addAll([
-          'Jangan berikan sebarang maklumat',
-          'Tamatkan panggilan segera',
-          'Call bank secara langsung menggunakan nombor rasmi',
-          'Laporkan kepada Bank Negara'
+          'Do not provide any information',
+          'End the call immediately',
+          'Call bank directly using official number',
+          'Report to Bank Negara'
         ]);
       }
     }
@@ -91,14 +103,14 @@ class CallDetectionService {
         category = ScamCategory.lotteryScam;
         confidenceScore = 0.92;
         warningSigns.addAll([
-          'Mengumumkan kemenangan',
-          'Meminta bayaran terlebih dahulu',
-          'Tawaran yang terlalu baik untuk menjadi kenyataan'
+          'Announces winnings',
+          'Requests upfront payment',
+          'Offer too good to be true'
         ]);
         recommendedActions.addAll([
-          'Jangan bayar sebarang yuran',
-          'Tamatkan panggilan',
-          'Semak dengan pihak berkenaan secara langsung'
+          'Do not pay any fees',
+          'End the call',
+          'Verify with relevant parties directly'
         ]);
       }
     }
@@ -111,15 +123,15 @@ class CallDetectionService {
         category = ScamCategory.governmentImpersonation;
         confidenceScore = 0.88;
         warningSigns.addAll([
-          'Mengaku dari agensi kerajaan',
-          'Mengancam tindakan undang-undang',
-          'Meminta pembayaran segera'
+          'Claims to be from government agency',
+          'Threatens legal action',
+          'Requests immediate payment'
         ]);
         recommendedActions.addAll([
-          'Jangan panik',
-          'Minta nombor rujukan dan nama pegawai',
-          'Call agensi berkenaan menggunakan nombor rasmi',
-          'Jangan buat sebarang pembayaran'
+          'Do not panic',
+          'Ask for reference number and officer name',
+          'Call agency directly using official number',
+          'Do not make any payments'
         ]);
       }
     }
@@ -132,14 +144,14 @@ class CallDetectionService {
         category = ScamCategory.techSupport;
         confidenceScore = 0.85;
         warningSigns.addAll([
-          'Mengaku dari syarikat teknologi',
-          'Meminta akses remote',
-          'Mengancam dengan isu teknikal'
+          'Claims to be from tech company',
+          'Requests remote access',
+          'Threatens with technical issues'
         ]);
         recommendedActions.addAll([
-          'Jangan berikan akses remote',
-          'Tamatkan panggilan',
-          'Scan komputer dengan antivirus yang dipercayai'
+          'Do not provide remote access',
+          'End the call',
+          'Scan computer with trusted antivirus'
         ]);
       }
     }
@@ -151,15 +163,15 @@ class CallDetectionService {
         category = ScamCategory.kidnapping;
         confidenceScore = 0.98;
         warningSigns.addAll([
-          'Mengancam keselamatan ahli keluarga',
-          'Meminta wang tebusan',
-          'Mewujudkan keadaan panik'
+          'Threatens family member safety',
+          'Requests ransom money',
+          'Creates panic situation'
         ]);
         recommendedActions.addAll([
-          'KEKALKAN KETENANGAN',
-          'Jangan berikan sebarang wang',
-          'Cuba hubungi ahli keluarga terbabit',
-          'Laporkan kepada polis segera (999)'
+          'REMAIN CALM',
+          'Do not give any money',
+          'Try to contact the family member involved',
+          'Report to police immediately (999)'
         ]);
       }
     }
@@ -168,9 +180,9 @@ class CallDetectionService {
     if (riskLevel == CallRiskLevel.safe) {
       confidenceScore = 0.15;
       recommendedActions.addAll([
-        'Teruskan perbualan dengan berhati-hati',
-        'Jangan berikan maklumat sensitif',
-        'Rekodkan panggilan jika perlu'
+        'Continue conversation cautiously',
+        'Do not provide sensitive information',
+        'Record call if necessary'
       ]);
     }
 
