@@ -46,6 +46,9 @@ dependencies:
   
   # Permission handling for call access (future feature)
   permission_handler: ^11.1.0
+  
+  # File picker for audio file selection
+  file_picker: ^8.0.3
 
 dev_dependencies:
   flutter_test:
