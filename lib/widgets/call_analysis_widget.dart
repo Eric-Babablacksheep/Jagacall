@@ -81,7 +81,7 @@ class CallAnalysisWidget extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              '${(analysis.confidenceScore * 100).toInt()}% Keyakinan',
+              '${(analysis.confidenceScore * 100).toInt()}% Confidence',
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -99,7 +99,7 @@ class CallAnalysisWidget extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Transkrip Panggilan:',
+          'Call Transcript:',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
@@ -124,13 +124,13 @@ class CallAnalysisWidget extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Maklumat Analisis:',
+          'Analysis Details:',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
-        _buildDetailRow('Kategori', analysis.category.displayName),
+        _buildDetailRow('Category', analysis.category.displayName),
         _buildDetailRow('Model', analysis.analysisModel),
-        _buildDetailRow('Masa', _formatDateTime(analysis.timestamp)),
+        _buildDetailRow('Time', _formatDateTime(analysis.timestamp)),
       ],
     );
   }
@@ -144,7 +144,7 @@ class CallAnalysisWidget extends StatelessWidget {
             Icon(Icons.warning, color: Colors.orange[700], size: 20),
             const SizedBox(width: 8),
             Text(
-              'Tanda-tanda Amaran:',
+              'Warning Signs:',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -177,7 +177,7 @@ class CallAnalysisWidget extends StatelessWidget {
             Icon(Icons.lightbulb, color: Colors.blue[700], size: 20),
             const SizedBox(width: 8),
             Text(
-              'Tindakan Disyorkan:',
+              'Recommended Actions:',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
