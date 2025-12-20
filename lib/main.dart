@@ -1,13 +1,44 @@
 import 'package:flutter/material.dart';
+// import 'package:workmanager/workmanager.dart'; // Temporarily disabled
 import 'screens/call_detection_screen.dart';
 import 'screens/file_scan_screen.dart';
 import 'screens/voice_detection_screen.dart';
 import 'screens/settings_screen.dart';
 import 'services/demo_mode_service.dart';
+import 'services/notification_service.dart';
+import 'services/file_monitor_service.dart';
+import 'services/file_analysis_service.dart';
+import 'models/file_analysis.dart';
+
+// WorkManager task name - temporarily disabled
+// const String fileMonitoringTask = "fileMonitoringTask";
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize services
   await DemoModeService.init();
+  await NotificationService().initialize();
+  
+  // WorkManager temporarily disabled due to compatibility issues
+  // Initialize WorkManager for background tasks
+  // await Workmanager().initialize(
+  //   callbackDispatcher,
+  //   isInDebugMode: true, // Set to false for production
+  // );
+  
+  // Register periodic task for file monitoring (every 15 minutes)
+  // await Workmanager().registerPeriodicTask(
+  //   "1",
+  //   fileMonitoringTask,
+  //   frequency: const Duration(minutes: 15),
+  //   constraints: Constraints(
+  //     networkType: NetworkType.not_required,
+  //     requiresCharging: false,
+  //     requiresDeviceIdle: false,
+  //   ),
+  // );
+  
   runApp(const JagaCallApp());
 }
 
@@ -117,6 +148,7 @@ class JagaCallApp extends StatelessWidget {
         ),
       ),
       home: const MainScreen(),
+      navigatorKey: MainScreen.navigatorKey,
       debugShowCheckedModeBanner: false,
     );
   }
@@ -124,9 +156,33 @@ class JagaCallApp extends StatelessWidget {
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
   @override
   State<MainScreen> createState() => _MainScreenState();
+
+  /// Handle navigation from notification tap
+  static void handleNotificationTap(String? filePath) {
+    if (filePath != null) {
+      // Navigate to Files tab and then to file analysis
+      navigatorKey.currentState?.pushNamedAndRemoveUntil(
+        '/',
+        (route) => false,
+      );
+      // Switch to Files tab
+      final currentState = navigatorKey.currentState?.context;
+      if (currentState != null) {
+        final mainScreen = currentState.findAncestorStateOfType<_MainScreenState>();
+        mainScreen?.setState(() {
+          mainScreen._currentIndex = 1; // Files tab
+        });
+        
+        // Navigate to file analysis with the file path
+        // This would require updating FileScanScreen to accept a file path parameter
+        // For now, we'll just switch to the Files tab
+      }
+    }
+  }
 }
 
 class _MainScreenState extends State<MainScreen> {
@@ -138,6 +194,20 @@ class _MainScreenState extends State<MainScreen> {
     const VoiceDetectionScreen(),
     const SettingsScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _setupNotificationHandler();
+  }
+
+  void _setupNotificationHandler() {
+    // Initialize notification service with tap handler
+    NotificationService().initialize().then((_) {
+      // The notification tap handler is already set up in NotificationService
+      // We'll use a method channel or global state to handle navigation
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
