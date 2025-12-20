@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/file_analysis.dart';
 import '../services/file_analysis_service.dart';
+import '../services/file_monitor_service.dart';
+import '../services/notification_service.dart';
 import '../constants/app_constants.dart';
 import '../widgets/file_analysis_widget.dart';
 import '../widgets/file_input_widget.dart';
@@ -15,9 +18,15 @@ class FileScanScreen extends StatefulWidget {
 class _FileScanScreenState extends State<FileScanScreen>
     with TickerProviderStateMixin {
   final FileAnalysisService _analysisService = FileAnalysisService();
+  final FileMonitorService _monitorService = FileMonitorService();
+  final NotificationService _notificationService = NotificationService();
   final TextEditingController _fileNameController = TextEditingController();
   FileAnalysis? _lastAnalysis;
   bool _isAnalyzing = false;
+  String? _selectedFilePath; // Added to store file path
+  bool _isAutoScanning = false;
+  String _autoScanMessage = '';
+  StreamSubscription<MonitoredFile>? _fileDetectionSubscription;
   
   FileType _selectedFileType = FileType.apk;
   SourceApp _selectedSourceApp = SourceApp.whatsapp;
@@ -36,12 +45,23 @@ class _FileScanScreenState extends State<FileScanScreen>
     _pulseAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
+    
+    // Listen for new file detections
+    _fileDetectionSubscription = _monitorService.fileDetectedStream.listen(
+      _handleNewFileDetection,
+    );
+    
+    // Auto-trigger scan when app gains focus (demo simulation)
+    WidgetsBinding.instance.addObserver(_LifecycleObserver(this));
   }
 
   @override
   void dispose() {
     _fileNameController.dispose();
     _pulseController.dispose();
+    _fileDetectionSubscription?.cancel();
+    _monitorService.dispose();
+    WidgetsBinding.instance.removeObserver(_LifecycleObserver(this));
     super.dispose();
   }
 
@@ -63,6 +83,7 @@ class _FileScanScreenState extends State<FileScanScreen>
     try {
       final analysis = await _analysisService.analyzeFile(
         fileName: fileName,
+        filePath: _selectedFilePath, // Pass file path
         fileType: _selectedFileType,
         sourceApp: _selectedSourceApp,
         permissions: _selectedPermissions,
@@ -125,8 +146,11 @@ class _FileScanScreenState extends State<FileScanScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('File Scanner'),
+        title: const Text('Malware & File Scanner'),
         centerTitle: true,
+        elevation: 0,
+        backgroundColor: colorScheme.surface,
+        foregroundColor: colorScheme.onSurface,
         actions: [
           IconButton(
             icon: const Icon(Icons.info_outline),
@@ -135,12 +159,15 @@ class _FileScanScreenState extends State<FileScanScreen>
           ),
         ],
       ),
+      backgroundColor: colorScheme.surface,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _buildHeader(colorScheme),
+            const SizedBox(height: 24),
+            _buildAutoScanSection(colorScheme),
             const SizedBox(height: 24),
             _buildQuickActions(colorScheme),
             const SizedBox(height: 24),
@@ -184,13 +211,13 @@ class _FileScanScreenState extends State<FileScanScreen>
                 child: Column(
                   children: [
                     Icon(
-                      Icons.insert_drive_file,
+                      Icons.security,
                       size: 64,
                       color: colorScheme.onPrimary,
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'APK & File Scam Detection',
+                      'Malware & File Scanner',
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         color: colorScheme.onPrimary,
                         fontWeight: FontWeight.bold,
@@ -199,10 +226,25 @@ class _FileScanScreenState extends State<FileScanScreen>
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Use ILMU AI to detect dangerous files and scams',
+                      'Powered by ILMU AI • Advanced malware detection for executable files',
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: colorScheme.onPrimary.withOpacity(0.9),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: colorScheme.onPrimary.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        'DEMO MODE',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: colorScheme.onPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
@@ -215,11 +257,146 @@ class _FileScanScreenState extends State<FileScanScreen>
     );
   }
 
+  Widget _buildAutoScanSection(ColorScheme colorScheme) {
+    return Card(
+      elevation: 2,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          gradient: LinearGradient(
+            colors: [
+              colorScheme.primary.withOpacity(0.1),
+              colorScheme.secondary.withOpacity(0.1),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.autorenew,
+                    color: colorScheme.primary,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Automatic Download Scan (Demo)',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Automatically monitors your Downloads folder for suspicious files and scans them for threats.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurface.withOpacity(0.8),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: _isAutoScanning ? null : _scanLatestDownloadedFile,
+                      icon: _isAutoScanning
+                          ? SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: colorScheme.onPrimary,
+                              ),
+                            )
+                          : const Icon(Icons.folder_open),
+                      label: Text(_isAutoScanning ? 'Scanning...' : 'Scan Latest Download'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: colorScheme.primary,
+                        foregroundColor: colorScheme.onPrimary,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: _simulateNewDownload,
+                      icon: const Icon(Icons.download),
+                      label: const Text('Simulate Download'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: colorScheme.secondary,
+                        foregroundColor: colorScheme.onSecondary,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              if (_autoScanMessage.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: _isAutoScanning
+                        ? colorScheme.primary.withOpacity(0.1)
+                        : Colors.green.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: _isAutoScanning
+                          ? colorScheme.primary.withOpacity(0.3)
+                          : Colors.green.withOpacity(0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        _isAutoScanning ? Icons.scanner : Icons.check_circle,
+                        size: 16,
+                        color: _isAutoScanning
+                            ? colorScheme.primary
+                            : Colors.green,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _autoScanMessage,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: _isAutoScanning
+                                ? colorScheme.primary
+                                : Colors.green,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildQuickActions(ColorScheme colorScheme) {
     return Row(
       children: [
         Expanded(
           child: Card(
+            elevation: 1,
             child: InkWell(
               onTap: _loadSampleMalicious,
               borderRadius: BorderRadius.circular(12),
@@ -234,9 +411,16 @@ class _FileScanScreenState extends State<FileScanScreen>
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Load Malicious Sample',
+                      'Test Malware',
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
                         fontWeight: FontWeight.w600,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    Text(
+                      'Dangerous file',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurface.withOpacity(0.6),
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -249,6 +433,7 @@ class _FileScanScreenState extends State<FileScanScreen>
         const SizedBox(width: 12),
         Expanded(
           child: Card(
+            elevation: 1,
             child: InkWell(
               onTap: _loadSampleSafe,
               borderRadius: BorderRadius.circular(12),
@@ -257,15 +442,22 @@ class _FileScanScreenState extends State<FileScanScreen>
                 child: Column(
                   children: [
                     Icon(
-                      Icons.security,
+                      Icons.check_circle,
                       size: 32,
                       color: colorScheme.primary,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Load Safe Sample',
+                      'Test Safe File',
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
                         fontWeight: FontWeight.w600,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    Text(
+                      'Clean document',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurface.withOpacity(0.6),
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -303,14 +495,20 @@ class _FileScanScreenState extends State<FileScanScreen>
               onFileTypeChanged: (type) => setState(() => _selectedFileType = type),
               onSourceAppChanged: (app) => setState(() => _selectedSourceApp = app),
               onPermissionsChanged: (permissions) => setState(() => _selectedPermissions = permissions),
+              onFilePathChanged: (filePath) => setState(() => _selectedFilePath = filePath),
               onSampleSelected: (sample) {
                 _fileNameController.text = sample['fileName'] as String;
                 setState(() {
+                  _selectedFilePath = null; // Clear file path for sample files
+                  final fileTypeString = sample['fileType'] as String;
                   _selectedFileType = FileType.values.firstWhere(
-                    (e) => e.name == sample['fileType'],
+                    (e) => e.name == fileTypeString,
+                    orElse: () => FileType.other,
                   );
+                  final sourceAppString = sample['sourceApp'] as String;
                   _selectedSourceApp = SourceApp.values.firstWhere(
-                    (e) => e.name == sample['sourceApp'],
+                    (e) => e.name == sourceAppString,
+                    orElse: () => SourceApp.other,
                   );
                   _selectedPermissions = List<String>.from(sample['permissions'] as List);
                 });
@@ -337,7 +535,7 @@ class _FileScanScreenState extends State<FileScanScreen>
               ),
             )
           : const Icon(Icons.scanner),
-      label: Text(_isAnalyzing ? 'Analyzing...' : 'Scan File'),
+      label: Text(_isAnalyzing ? 'Analyzing...' : 'Analyze File'),
       style: FilledButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 16),
         textStyle: const TextStyle(
@@ -370,14 +568,17 @@ class _FileScanScreenState extends State<FileScanScreen>
           ],
         ),
         const SizedBox(height: 12),
-        FileAnalysisWidget(analysis: _lastAnalysis!),
+        FileAnalysisWidget(
+          analysis: _lastAnalysis!,
+          onFileDeleted: _handleFileDeleted,
+        ),
       ],
     );
   }
 
   Widget _buildSafetyTips(ColorScheme colorScheme) {
     return Card(
-      elevation: 2,
+      elevation: 1,
       color: colorScheme.errorContainer.withOpacity(0.3),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -387,13 +588,13 @@ class _FileScanScreenState extends State<FileScanScreen>
             Row(
               children: [
                 Icon(
-                  Icons.security,
+                  Icons.gpp_good,
                   color: colorScheme.error,
                   size: 24,
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'File Safety Tips',
+                  'Malware Protection Tips',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: colorScheme.error,
@@ -402,11 +603,12 @@ class _FileScanScreenState extends State<FileScanScreen>
               ],
             ),
             const SizedBox(height: 16),
-            _buildTip('Do not install APKs from unknown sources', colorScheme),
-            _buildTip('Check sender name before opening files', colorScheme),
-            _buildTip('Pay attention to requested permissions', colorScheme),
-            _buildTip('Use antivirus to scan files', colorScheme),
-            _buildTip('Report suspicious files to authorities', colorScheme),
+            _buildTip('Never run .exe, .scr, or .dll files from unknown sources', colorScheme),
+            _buildTip('Scan all email attachments before opening', colorScheme),
+            _buildTip('Be suspicious of files with double extensions (e.g., file.pdf.exe)', colorScheme),
+            _buildTip('Keep your antivirus software updated', colorScheme),
+            _buildTip('Use virtualization for testing suspicious files', colorScheme),
+            _buildTip('Enable file extension visibility in your system', colorScheme),
           ],
         ),
       ),
@@ -448,15 +650,17 @@ class _FileScanScreenState extends State<FileScanScreen>
     setState(() {
       _selectedFileType = FileType.values.firstWhere(
         (e) => e.name == maliciousSample['fileType'],
+        orElse: () => FileType.other,
       );
       _selectedSourceApp = SourceApp.values.firstWhere(
         (e) => e.name == maliciousSample['sourceApp'],
+        orElse: () => SourceApp.other,
       );
       _selectedPermissions = List<String>.from(maliciousSample['permissions'] as List);
     });
     
     _showCustomSnackBar(
-      'Malicious sample loaded',
+      'Scam sample loaded',
       Icons.warning,
       Colors.orange,
     );
@@ -472,9 +676,11 @@ class _FileScanScreenState extends State<FileScanScreen>
     setState(() {
       _selectedFileType = FileType.values.firstWhere(
         (e) => e.name == safeSample['fileType'],
+        orElse: () => FileType.other,
       );
       _selectedSourceApp = SourceApp.values.firstWhere(
         (e) => e.name == safeSample['sourceApp'],
+        orElse: () => SourceApp.other,
       );
       _selectedPermissions = List<String>.from(safeSample['permissions'] as List);
     });
@@ -505,7 +711,7 @@ class _FileScanScreenState extends State<FileScanScreen>
               Text('Version: ${AppConstants.appVersion}'),
               const SizedBox(height: 12),
               const Text(
-                'Dangerous file detector using ILMU AI',
+                'APK & File Scam Detection System',
                 style: TextStyle(fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 16),
@@ -527,33 +733,13 @@ class _FileScanScreenState extends State<FileScanScreen>
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '• ILMU-text-free-safe - File risk analysis',
+                      '• ILMU-text-free-safe - File scam detection\n'
+                      '• Heuristic analysis - Pattern recognition',
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onPrimaryContainer,
                       ),
                     ),
                   ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Supported File Types:',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 8),
-              ...['APK (Android App)', 'PDF (Document)', 'DOC/DOCX (Word)', 
-                   'XLS/XLSX (Excel)', 'IMG (Image)'].map(
-                (type) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2),
-                  child: Row(
-                    children: [
-                      Icon(Icons.description, size: 16, color: Theme.of(context).colorScheme.primary),
-                      const SizedBox(width: 8),
-                      Text(type),
-                    ],
-                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -572,7 +758,7 @@ class _FileScanScreenState extends State<FileScanScreen>
                         Icon(Icons.warning, color: Colors.red, size: 20),
                         const SizedBox(width: 8),
                         const Text(
-                          'Warning',
+                          'Disclaimer',
                           style: TextStyle(
                             color: Colors.red,
                             fontWeight: FontWeight.bold,
@@ -582,8 +768,10 @@ class _FileScanScreenState extends State<FileScanScreen>
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'This tool is for assistance only. Always be cautious with files from unknown sources.',
-                      style: TextStyle(color: Colors.red),
+                      'This is a demo system for educational purposes.\n'
+                      'Always verify files through official channels.\n'
+                      'Use updated antivirus software for real protection.',
+                      style: TextStyle(color: Colors.red, fontSize: 12),
                     ),
                   ],
                 ),
@@ -599,5 +787,153 @@ class _FileScanScreenState extends State<FileScanScreen>
         ],
       ),
     );
+  }
+
+  void _handleFileDeleted() {
+    setState(() {
+      _lastAnalysis = null;
+      _selectedFilePath = null;
+      _fileNameController.clear();
+    });
+    
+    _showCustomSnackBar(
+      'File deleted successfully!',
+      Icons.delete,
+      Colors.green,
+    );
+  }
+
+  void _handleNewFileDetection(MonitoredFile monitoredFile) {
+    setState(() {
+      _autoScanMessage = 'New file detected: ${monitoredFile.name}. Scanning for threats...';
+      _isAutoScanning = true;
+    });
+
+    // Show notification for new file detection
+    _notificationService.showFileDetectionNotification(monitoredFile);
+
+    // Automatically analyze the detected file
+    _analyzeMonitoredFile(monitoredFile);
+  }
+
+  Future<void> _scanLatestDownloadedFile() async {
+    setState(() {
+      _isAutoScanning = true;
+      _autoScanMessage = 'Scanning Downloads folder for latest file...';
+    });
+
+    try {
+      final latestFile = await _monitorService.getLatestDownloadedFile();
+      
+      if (latestFile != null) {
+        setState(() {
+          _autoScanMessage = 'Found: ${latestFile.name} (${latestFile.formattedSize})';
+        });
+        
+        // Small delay for better UX
+        await Future.delayed(const Duration(milliseconds: 500));
+        
+        await _analyzeMonitoredFile(latestFile);
+      } else {
+        setState(() {
+          _autoScanMessage = 'No suspicious files found in Downloads folder';
+          _isAutoScanning = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _autoScanMessage = 'Error scanning Downloads folder: $e';
+        _isAutoScanning = false;
+      });
+    }
+  }
+
+  void _simulateNewDownload() {
+    _monitorService.simulateNewFileDetection();
+  }
+
+  Future<void> _analyzeMonitoredFile(MonitoredFile monitoredFile) async {
+    try {
+      // Show progress notification
+      await _notificationService.showScanProgressNotification(monitoredFile.name, 25);
+
+      // Determine file type from extension
+      FileType fileType = FileType.other;
+      for (final type in FileType.values) {
+        if (type.name == monitoredFile.extension) {
+          fileType = type;
+          break;
+        }
+      }
+
+      // Update progress
+      await _notificationService.showScanProgressNotification(monitoredFile.name, 50);
+
+      // Determine source app (simulate based on file type)
+      SourceApp sourceApp = SourceApp.browser;
+      if (fileType == FileType.apk) {
+        sourceApp = SourceApp.whatsapp; // APKs often shared via messaging
+      }
+
+      // Update progress
+      await _notificationService.showScanProgressNotification(monitoredFile.name, 75);
+
+      final analysis = await _analysisService.analyzeFile(
+        fileName: monitoredFile.name,
+        filePath: monitoredFile.path,
+        fileType: fileType,
+        sourceApp: sourceApp,
+        permissions: fileType == FileType.apk ? ['camera', 'storage'] : [],
+      );
+
+      // Cancel progress notification
+      await _notificationService.cancelProgressNotification();
+
+      // Show completion notification
+      await _notificationService.showScanCompleteNotification(analysis);
+
+      setState(() {
+        _lastAnalysis = analysis;
+        _fileNameController.text = monitoredFile.name;
+        _selectedFilePath = monitoredFile.path;
+        _selectedFileType = fileType;
+        _selectedSourceApp = sourceApp;
+        _autoScanMessage = 'Analysis complete! Risk level: ${analysis.riskLevel.displayName}';
+        _isAutoScanning = false;
+      });
+
+      _showCustomSnackBar(
+        'Automatic scan complete: ${analysis.riskLevel.displayName} risk',
+        analysis.riskLevel == FileRiskLevel.high ? Icons.warning : Icons.check_circle,
+        analysis.riskLevel == FileRiskLevel.high ? Colors.orange : Colors.green,
+      );
+    } catch (e) {
+      // Cancel progress notification on error
+      await _notificationService.cancelProgressNotification();
+      
+      setState(() {
+        _autoScanMessage = 'Error analyzing file: $e';
+        _isAutoScanning = false;
+      });
+    }
+  }
+}
+
+// Lifecycle observer to trigger scan when app regains focus
+class _LifecycleObserver extends WidgetsBindingObserver {
+  final _FileScanScreenState _screenState;
+  
+  _LifecycleObserver(this._screenState);
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Simulate auto-scan when app regains focus
+      Future.delayed(const Duration(seconds: 1), () {
+        if (_screenState.mounted) {
+          _screenState._scanLatestDownloadedFile();
+        }
+      });
+    }
   }
 }
