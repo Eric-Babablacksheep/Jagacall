@@ -244,8 +244,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### Get Help
 
-- **Email**: support@jagacall.com
-- **Website**: www.jagacall.com
 - **Documentation**: See [Testing Guide](TESTING_GUIDE.md) and [Disclaimer](DISCLAIMER.md)
 
 ### Report Issues
