@@ -56,13 +56,16 @@ class _VoiceDetectionScreenState extends State<VoiceDetectionScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Voice Scam Detection'),
+        title: const Text('AI Voice Detection'),
         centerTitle: true,
+        elevation: 0,
+        backgroundColor: colorScheme.surface,
+        foregroundColor: colorScheme.onSurface,
         actions: [
           IconButton(
             icon: const Icon(Icons.info_outline),
             onPressed: _showInfo,
-            tooltip: 'About Voice Detection',
+            tooltip: 'About Deepfake Detection',
           ),
         ],
       ),
@@ -73,15 +76,13 @@ class _VoiceDetectionScreenState extends State<VoiceDetectionScreen>
           children: [
             _buildHeader(colorScheme),
             const SizedBox(height: 24),
-            _buildQuickActions(colorScheme),
-            const SizedBox(height: 24),
             _buildInputSection(colorScheme),
             const SizedBox(height: 24),
             if (_currentAnalysis != null) ...[
               _buildResultsSection(colorScheme),
               const SizedBox(height: 24),
             ],
-            _buildFeaturesSection(colorScheme),
+            _buildSafetyTips(colorScheme),
           ],
         ),
       ),
@@ -98,7 +99,7 @@ class _VoiceDetectionScreenState extends State<VoiceDetectionScreen>
             elevation: 4,
             child: Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
                 gradient: LinearGradient(
                   colors: [
                     colorScheme.primary,
@@ -109,29 +110,45 @@ class _VoiceDetectionScreenState extends State<VoiceDetectionScreen>
                 ),
               ),
               child: Padding(
-                padding: const EdgeInsets.all(24.0),
+                padding: const EdgeInsets.all(32.0),
                 child: Column(
                   children: [
                     Icon(
-                      Icons.mic,
-                      size: 64,
+                      Icons.security,
+                      size: 80,
                       color: colorScheme.onPrimary,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                     Text(
-                      'Voice Scam Detection',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      'AI Voice Detection',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         color: colorScheme.onPrimary,
                         fontWeight: FontWeight.bold,
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     Text(
-                      'Analyze voice transcripts for scam indicators using ILMU AI',
+                      'Detect voice cloning & scam calls\nProtect from fake emergencies & impersonation',
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: colorScheme.onPrimary.withOpacity(0.9),
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: colorScheme.onPrimary.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        'PROTOTYPE DEMO',
+                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          color: colorScheme.onPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
@@ -144,103 +161,125 @@ class _VoiceDetectionScreenState extends State<VoiceDetectionScreen>
     );
   }
 
-  Widget _buildQuickActions(ColorScheme colorScheme) {
-    return Row(
-      children: [
-        Expanded(
-          child: Card(
-            child: InkWell(
-              onTap: _loadScamExample,
-              borderRadius: BorderRadius.circular(12),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    Icon(
-                      Icons.warning_amber,
-                      size: 32,
-                      color: colorScheme.error,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Load Scam Example',
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Card(
-            child: InkWell(
-              onTap: _loadSafeExample,
-              borderRadius: BorderRadius.circular(12),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    Icon(
-                      Icons.check_circle,
-                      size: 32,
-                      color: colorScheme.primary,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Load Safe Example',
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
+  Widget _buildInputSection(ColorScheme colorScheme) {
+    return VoiceInputWidget(
+      onVoiceSubmitted: _analyzeVoice,
+      isLoading: _isLoading,
     );
   }
 
-  Widget _buildInputSection(ColorScheme colorScheme) {
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildSafetyTips(ColorScheme colorScheme) {
+    final tips = [
+      {
+        'icon': Icons.phone_disabled,
+        'title': 'Hang Up Immediately',
+        'description': 'If suspicious, end the call immediately',
+        'color': colorScheme.error,
+      },
+      {
+        'icon': Icons.contact_phone,
+        'title': 'Verify Independently',
+        'description': 'Use official numbers to verify',
+        'color': colorScheme.primary,
+      },
+      {
+        'icon': Icons.no_encryption,
+        'title': 'Never Share OTP',
+        'description': 'Never share OTP codes',
+        'color': colorScheme.secondary,
+      },
+      {
+        'icon': Icons.record_voice_over,
+        'title': 'Trust Your Instincts',
+        'description': 'Unnatural voice = be suspicious',
+        'color': colorScheme.tertiary,
+      },
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
           children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.record_voice_over,
-                  color: colorScheme.primary,
-                  size: 24,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Voice Transcript Input',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.onSurface,
-                  ),
-                ),
-              ],
+            Icon(
+              Icons.shield,
+              color: colorScheme.primary,
+              size: 24,
             ),
-            const SizedBox(height: 16),
-            VoiceInputWidget(
-              onTranscriptSubmitted: _analyzeVoiceTranscript,
-              isLoading: _isLoading,
+            const SizedBox(width: 8),
+            Text(
+              'Protection Tips',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurface,
+              ),
             ),
           ],
         ),
-      ),
+        const SizedBox(height: 16),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            childAspectRatio: 1.3,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+          ),
+          itemCount: tips.length,
+          itemBuilder: (context, index) {
+            final tip = tips[index];
+            return Card(
+              elevation: 2,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  gradient: LinearGradient(
+                    colors: [
+                      tip['color'] as Color,
+                      (tip['color'] as Color).withOpacity(0.1),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        tip['icon'] as IconData,
+                        size: 32,
+                        color: tip['color'] as Color,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        tip['title'] as String,
+                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: (tip['color'] as Color),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        tip['description'] as String,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurface.withOpacity(0.8),
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 
@@ -282,104 +321,8 @@ class _VoiceDetectionScreenState extends State<VoiceDetectionScreen>
     );
   }
 
-  Widget _buildFeaturesSection(ColorScheme colorScheme) {
-    final features = [
-      {
-        'icon': Icons.gavel,
-        'title': 'Authority Detection',
-        'description': 'Detects impersonation of Bank Negara, PDRM, LHDN',
-      },
-      {
-        'icon': Icons.timer,
-        'title': 'Urgency Tactics',
-        'description': 'Identifies pressure and time-sensitive requests',
-      },
-      {
-        'icon': Icons.psychology,
-        'title': 'Emotional Analysis',
-        'description': 'Recognizes manipulation and fear tactics',
-      },
-      {
-        'icon': Icons.attach_money,
-        'title': 'Financial Flags',
-        'description': 'Flags suspicious payment requests',
-      },
-      {
-        'icon': Icons.language,
-        'title': 'Multi-Language',
-        'description': 'Supports English and Bahasa Malaysia',
-      },
-      {
-        'icon': Icons.assessment,
-        'title': 'Risk Assessment',
-        'description': 'Provides detailed risk analysis',
-      },
-    ];
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Key Features',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: colorScheme.onSurface,
-          ),
-        ),
-        const SizedBox(height: 16),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 1.2,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-          ),
-          itemCount: features.length,
-          itemBuilder: (context, index) {
-            final feature = features[index];
-            return Card(
-              elevation: 1,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      feature['icon'] as IconData,
-                      size: 32,
-                      color: colorScheme.primary,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      feature['title'] as String,
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      feature['description'] as String,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurface.withOpacity(0.7),
-                      ),
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  Future<void> _analyzeVoiceTranscript(String transcript) async {
+  Future<void> _analyzeVoice(String transcript, {String? audioFilePath, Duration? duration}) async {
     setState(() {
       _isLoading = true;
       _currentAnalysis = null;
@@ -507,36 +450,6 @@ class _VoiceDetectionScreenState extends State<VoiceDetectionScreen>
     );
   }
 
-  void _loadScamExample() {
-    const scamTranscript = '''
-    Hello, this is Officer Ahmad from Bank Negara Malaysia. We have detected suspicious activity in your bank account. 
-    You need to transfer your money to a secure government account immediately to protect your funds. 
-    This is a matter of national security. Do not tell anyone about this call as it is confidential. 
-    Please provide your banking details now or your account will be frozen within the hour.
-    ''';
-    
-    _analyzeVoiceTranscript(scamTranscript);
-    _showCustomSnackBar(
-      'Scam example loaded',
-      Icons.warning,
-      Colors.orange,
-    );
-  }
-
-  void _loadSafeExample() {
-    const safeTranscript = '''
-    Hi, this is Sarah from your local bank. I'm calling to inform you about our new mobile banking app features. 
-    There's no urgent action required from your side. You can visit our website at your convenience 
-    to learn more about the updated security features. Have a great day!
-    ''';
-    
-    _analyzeVoiceTranscript(safeTranscript);
-    _showCustomSnackBar(
-      'Safe example loaded',
-      Icons.check_circle,
-      Colors.green,
-    );
-  }
 
   void _resetAnalysis() {
     setState(() {
@@ -546,14 +459,17 @@ class _VoiceDetectionScreenState extends State<VoiceDetectionScreen>
   }
 
   void _showInfo() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Row(
           children: [
-            Icon(Icons.info_outline, color: Theme.of(context).colorScheme.primary),
+            Icon(Icons.info_outline, color: colorScheme.primary),
             const SizedBox(width: 8),
-            const Text('About Voice Detection'),
+            const Text('About AI Voice Detection'),
           ],
         ),
         content: SingleChildScrollView(
@@ -561,79 +477,119 @@ class _VoiceDetectionScreenState extends State<VoiceDetectionScreen>
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Voice Scam Detection using ILMU AI',
-                style: TextStyle(fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'AI Models Used:',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.onPrimaryContainer,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '• ILMU-text-free-safe - Voice pattern analysis\n'
-                      '• ILMU-text-intent - Intent recognition\n'
-                      '• ILMU-text-emotion - Emotional analysis',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onPrimaryContainer,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
               Text(
-                'How it works:',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
+                'AI Voice Detection by ILMU',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 8),
-              const Text('1. Input voice transcript or use examples'),
-              const Text('2. AI analyzes patterns and intent'),
-              const Text('3. Risk assessment is provided'),
-              const Text('4. Detailed recommendations are given'),
               const SizedBox(height: 16),
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
-                  border: Border.all(color: Colors.red.withOpacity(0.3)),
-                  borderRadius: BorderRadius.circular(8),
+                  color: colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.warning, color: Colors.red, size: 20),
+                        Icon(Icons.psychology, color: colorScheme.onPrimaryContainer),
                         const SizedBox(width: 8),
-                        const Text(
-                          'Disclaimer',
+                        Text(
+                          'AI Technology',
                           style: TextStyle(
-                            color: Colors.red,
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onPrimaryContainer,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '• Voice cloning detection\n'
+                      '• Voice pattern analysis\n'
+                      '• Scam pattern recognition\n'
+                      '• Behavioral indicators',
+                      style: TextStyle(
+                        color: colorScheme.onPrimaryContainer,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: colorScheme.tertiaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.gpp_good, color: colorScheme.onTertiaryContainer),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Detection Capabilities',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onTertiaryContainer,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '• Fake emergency calls\n'
+                      '• Authority impersonation\n'
+                      '• Bank verification scams\n'
+                      '• Voice synthesis',
+                      style: TextStyle(
+                        color: colorScheme.onTertiaryContainer,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: colorScheme.errorContainer,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: colorScheme.error.withOpacity(0.3)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.warning, color: colorScheme.error),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Important Disclaimer',
+                          style: TextStyle(
+                            color: colorScheme.error,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      'This tool is for assistance only. Always verify suspicious calls through official channels.',
-                      style: TextStyle(color: Colors.red),
+                    Text(
+                      'This is a PROTOTYPE DEMO for educational purposes.\n'
+                      'Always verify suspicious calls through official channels.\n'
+                      'JagaCall and ILMU are not responsible for decisions made based on this analysis.',
+                      style: TextStyle(
+                        color: colorScheme.error,
+                        height: 1.4,
+                      ),
                     ),
                   ],
                 ),
@@ -644,7 +600,7 @@ class _VoiceDetectionScreenState extends State<VoiceDetectionScreen>
         actions: [
           FilledButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Got it'),
+            child: const Text('Understood'),
           ),
         ],
       ),
