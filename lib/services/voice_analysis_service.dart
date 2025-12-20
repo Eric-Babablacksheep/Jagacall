@@ -8,61 +8,67 @@ class VoiceAnalysisService {
   static const String _apiKey = 'sk-svcacct-x-2_lwcUJ-jyEiheiduSDL2v5z_HCn6zJ5sK-6KTDHc';
   static const String _baseUrl = 'https://api.ytlailabs.tech/v1';
 
-  // Sample voice scam transcripts for demo
+  // Sample deepfake voice scam transcripts for demo
   static const List<Map<String, dynamic>> _sampleVoiceScams = [
     {
-      'transcript': 'Hello sir, I am calling from Bank Negara Malaysia. Your account has been compromised and we need you to provide your OTP number immediately to secure it.',
+      'transcript': 'Dad, I\'m in trouble! I had an accident and need RM5,000 for hospital bills right now. Please don\'t tell mom, just transfer the money to this account immediately.',
       'riskLevel': 'scam',
-      'scamType': 'impersonation',
+      'scamType': 'familyEmergency',
       'confidence': 95,
-      'linguisticRedFlags': ['Authority impersonation', 'Urgency language', 'OTP request'],
-      'behavioralRedFlags': ['Creating false emergency', 'Requesting sensitive information'],
-      'recommendedAction': 'END THE CALL IMMEDIATELY. Do not provide any information. Contact your bank directly using official numbers.'
+      'linguisticRedFlags': ['Family emergency claim', 'Urgency language', 'Secrecy request', 'Money transfer request'],
+      'behavioralRedFlags': ['Emotional manipulation', 'Creating false emergency', 'Isolating victim'],
+      'voiceIndicators': ['Unnatural pitch stability', 'Lack of emotional variation', 'Repetitive speech patterns'],
+      'recommendedAction': 'HANG UP IMMEDIATELY. Call your family member using their known phone number to verify their safety.'
     },
     {
-      'transcript': 'Assalamualaikum, saya dari Jabatan Hasil Dalam Negeri. Anda ada tunggakan cukai RM5,000 dan perlu bayar sekarang atau kami akan tangkap anda dalam masa 24 jam.',
+      'transcript': 'This is Sergeant Rahman from PDRM Cybercrime Unit. We have detected fraudulent activity in your bank account. You must verify your identity by providing your OTP code now to avoid arrest.',
       'riskLevel': 'scam',
-      'scamType': 'threat',
+      'scamType': 'authorityImpersonation',
       'confidence': 92,
-      'linguisticRedFlags': ['Government impersonation', 'Threat language', 'Urgency'],
-      'behavioralRedFlags': ['Using fear tactics', 'Immediate payment demand'],
-      'recommendedAction': 'DO NOT PAY. Hang up and call LHDN official hotline to verify.'
+      'linguisticRedFlags': ['Police impersonation', 'Threat of arrest', 'Urgency', 'OTP request'],
+      'behavioralRedFlags': ['Authority abuse', 'Creating fear', 'Requesting sensitive information'],
+      'voiceIndicators': ['Monotone delivery', 'Unnatural speech rhythm', 'Voice-identity mismatch'],
+      'recommendedAction': 'DO NOT PROVIDE OTP. Hang up and call PDRM official hotline to verify.'
     },
     {
-      'transcript': 'Mak, saya kemalangan! Saya di hospital dan perlu duit segera untuk pembedahan. Sila transfer RM10,000 ke akaun ini sekarang. Jangan beritahu ayah dulu.',
-      'riskLevel': 'highRisk',
-      'scamType': 'emotionalManipulation',
-      'confidence': 85,
-      'linguisticRedFlags': ['Emergency claim', 'Secrecy request', 'Urgent money request'],
-      'behavioralRedFlags': ['Emotional manipulation', 'Family emergency scam pattern'],
-      'recommendedAction': 'STAY CALM. Verify by calling your family member directly using their known phone number.'
-    },
-    {
-      'transcript': 'Congratulations! You have won a luxury car in our lucky draw. To claim your prize, please pay RM2,000 for processing fees and taxes.',
+      'transcript': 'Hello, I am calling from Maybank security department. Your account will be suspended within 30 minutes unless you confirm your identity. Please read out your full IC number and banking password.',
       'riskLevel': 'scam',
-      'scamType': 'financialRequest',
-      'confidence': 88,
-      'linguisticRedFlags': ['Prize claim', 'Advance fee request', 'Too good to be true'],
-      'behavioralRedFlags': ['Classic lottery scam pattern', 'Requesting payment for prize'],
-      'recommendedAction': 'DO NOT PAY. Legitimate prizes do not require payment. This is a scam.'
-    },
-    {
-      'transcript': 'Hello, this is John from Microsoft technical support. We detected malware on your computer. Please provide us remote access to fix it immediately.',
-      'riskLevel': 'scam',
-      'scamType': 'impersonation',
+      'scamType': 'bankVerification',
       'confidence': 90,
-      'linguisticRedFlags': ['Tech company impersonation', 'Remote access request', 'Urgency'],
-      'behavioralRedFlags': ['Fake tech support scam', 'Attempting to gain computer access'],
-      'recommendedAction': 'HANG UP. Microsoft will never call you unsolicited. Do not grant remote access.'
+      'linguisticRedFlags': ['Bank impersonation', 'Account suspension threat', 'Password request', 'Urgency'],
+      'behavioralRedFlags': ['Creating false emergency', 'Requesting confidential information'],
+      'voiceIndicators': ['Robotic speech patterns', 'Lack of natural pauses', 'Inconsistent vocal tone'],
+      'recommendedAction': 'NEVER SHARE PASSWORDS. Hang up and call your bank using the official number on your card.'
     },
     {
-      'transcript': 'Hi, this is your neighbor. I locked myself out and need to borrow some money for a locksmith. Can you help me out?',
+      'transcript': 'Mom, I lost my phone and I\'m using my friend\'s phone. I need you to transfer RM2,000 for my university fees. The deadline is today. Please send it to this account number quickly.',
+      'riskLevel': 'highRisk',
+      'scamType': 'familyEmergency',
+      'confidence': 85,
+      'linguisticRedFlags': ['Family member claim', 'Lost phone excuse', 'Urgent money request', 'Deadline pressure'],
+      'behavioralRedFlags': ['Emotional manipulation', 'Creating false urgency'],
+      'voiceIndicators': ['Slightly unnatural pitch', 'Reduced emotional range', 'Mechanical pronunciation'],
+      'recommendedAction': 'VERIFY IDENTITY. Call your child using their known phone number before sending any money.'
+    },
+    {
+      'transcript': 'Good morning, this is Officer Lim from LHDN. Our records show you have unpaid taxes totaling RM8,500. You must pay immediately or we will freeze your bank accounts and seize your assets.',
+      'riskLevel': 'scam',
+      'scamType': 'authorityImpersonation',
+      'confidence': 88,
+      'linguisticRedFlags': ['Tax authority impersonation', 'Asset seizure threat', 'Immediate payment demand'],
+      'behavioralRedFlags': ['Using authority to intimidate', 'Creating financial fear'],
+      'voiceIndicators': ['Overly formal speech', 'Unnatural cadence', 'Voice synthesis artifacts'],
+      'recommendedAction': 'DO NOT PAY. Hang up and contact LHDN directly through official channels.'
+    },
+    {
+      'transcript': 'Hi, this is Sarah from your bank\'s fraud department. We need to verify a recent transaction. Can you please confirm the 6-digit code we just sent to your phone?',
       'riskLevel': 'suspicious',
-      'scamType': 'other',
-      'confidence': 60,
-      'linguisticRedFlags': ['Money request', 'Urgency'],
-      'behavioralRedFlags': ['Potentially legitimate but suspicious'],
-      'recommendedAction': 'VERIFY the person\'s identity. Ask questions only your real neighbor would know.'
+      'scamType': 'bankVerification',
+      'confidence': 65,
+      'linguisticRedFlags': ['Bank fraud department claim', 'Code verification request'],
+      'behavioralRedFlags': ['Potential social engineering', 'Attempting to obtain OTP'],
+      'voiceIndicators': ['Slightly robotic tone', 'Minimal emotional variation'],
+      'recommendedAction': 'BE CAUTIOUS. Real banks will never ask for OTP codes. Hang up and call your bank directly.'
     }
   ];
 
@@ -108,6 +114,7 @@ class VoiceAnalysisService {
           timestamp: DateTime.now(),
           analysisModel: 'ILMU-asr + ILMU-text (Demo Mode)',
           isDemoMode: true,
+          voiceIndicators: List<String>.from(sample['voiceIndicators'] as List),
         );
       }
     }
@@ -118,17 +125,18 @@ class VoiceAnalysisService {
     double confidenceScore = 20.0;
     List<String> linguisticRedFlags = [];
     List<String> behavioralRedFlags = [];
-    String recommendedAction = 'Call appears to be legitimate, but always stay vigilant.';
+    List<String> voiceIndicators = [];
+    String recommendedAction = 'Voice appears authentic, but always verify suspicious calls.';
 
-    // Check for scam indicators
+    // Check for deepfake scam indicators
     final scamIndicators = {
-      'impersonation': ['bank negara', 'polis', 'lhdn', 'jpj', 'microsoft', 'google', 'apple'],
-      'urgency': ['immediately', 'sekarang', 'segera', 'urgent', 'cepat', 'today', 'esok'],
-      'financial': ['money', 'wang', 'payment', 'bayar', 'transfer', 'otp', 'account', 'akaun'],
-      'threat': ['arrest', 'tangkap', 'saman', 'court', 'mahkamah', 'jail', 'penjara'],
-      'emotional': ['emergency', 'kemalangan', 'hospital', 'danger', 'bahaya', 'family', 'keluarga'],
-      'prize': ['win', 'menang', 'prize', 'hadiah', 'lucky draw', 'cabutan bertuah'],
-      'access': ['remote access', 'akses remote', 'control', 'kawalan'],
+      'familyEmergency': ['dad', 'mom', 'son', 'daughter', 'family', 'accident', 'hospital', 'emergency', 'trouble'],
+      'authorityImpersonation': ['police', 'pdrm', 'bank negara', 'lhdn', 'jpj', 'sergeant', 'officer', 'department'],
+      'bankVerification': ['bank', 'account', 'verify', 'suspend', 'freeze', 'otp', 'password', 'security', 'fraud'],
+      'urgency': ['immediately', 'now', 'sekarang', 'segera', 'urgent', 'quickly', 'today', '30 minutes'],
+      'financial': ['money', 'transfer', 'payment', 'bayar', 'wang', 'rm', 'ringgit', 'account', 'akaun'],
+      'threat': ['arrest', 'tangkap', 'seize', 'freeze', 'suspend', 'legal action', 'court'],
+      'secrecy': ['don\'t tell', 'jangan beritahu', 'secret', 'confidential', 'alone'],
     };
 
     int scamScore = 0;
@@ -161,27 +169,31 @@ class VoiceAnalysisService {
 
     // Map scam type
     switch (detectedScamType) {
-      case 'impersonation':
-        scamType = VoiceScamType.impersonation;
+      case 'familyEmergency':
+        scamType = VoiceScamType.familyEmergency;
         break;
-      case 'urgency':
-        scamType = VoiceScamType.urgency;
+      case 'authorityImpersonation':
+        scamType = VoiceScamType.authorityImpersonation;
         break;
-      case 'financial':
-        scamType = VoiceScamType.financialRequest;
+      case 'bankVerification':
+        scamType = VoiceScamType.bankVerification;
         break;
-      case 'threat':
-        scamType = VoiceScamType.threat;
-        break;
-      case 'emotional':
-        scamType = VoiceScamType.emotionalManipulation;
-        break;
-      case 'prize':
-        scamType = VoiceScamType.financialRequest;
-        break;
-      case 'access':
-        scamType = VoiceScamType.impersonation;
-        break;
+    }
+
+    // Add simulated voice indicators for high-risk cases
+    if (scamScore >= 30) {
+      voiceIndicators.addAll([
+        'Unnatural pitch stability detected',
+        'Reduced emotional variation in speech',
+        'Slightly robotic cadence patterns',
+      ]);
+      
+      if (scamScore >= 60) {
+        voiceIndicators.addAll([
+          'Voice synthesis artifacts present',
+          'Inconsistent vocal characteristics',
+        ]);
+      }
     }
 
     return VoiceAnalysis(
@@ -197,6 +209,7 @@ class VoiceAnalysisService {
       timestamp: DateTime.now(),
       analysisModel: 'ILMU-asr + ILMU-text (Demo Mode)',
       isDemoMode: true,
+      voiceIndicators: voiceIndicators,
     );
   }
 
@@ -258,10 +271,11 @@ Consider Malaysian context and common scam patterns in the region.'''
         confidenceScore: 75.0, // Parsed from response
         linguisticRedFlags: [], // Parsed from response
         behavioralRedFlags: [], // Parsed from response
+        voiceIndicators: ['Live analysis - voice patterns being analyzed'], // Live mode indicator
         recommendedAction: 'Proceed with caution', // Parsed from response
         disclaimer: _getDisclaimer(),
         timestamp: DateTime.now(),
-        analysisModel: 'ILMU-asr + ILMU-text (Live Mode)',
+        analysisModel: 'ILMU-deepfake (Live Mode)',
         isDemoMode: false,
       );
     } else {
@@ -271,9 +285,9 @@ Consider Malaysian context and common scam patterns in the region.'''
 
   /// Get disclaimer text
   String _getDisclaimer() {
-    return '''DISCLAIMER: This voice analysis tool is for assistance only and does not provide 100% accuracy. 
-It focuses on linguistic and behavioral red flags, not biometric voice authentication. 
-Always verify suspicious calls through official channels. 
+    return '''DISCLAIMER: This AI Deepfake Voice Detection tool is for assistance only and does not provide 100% accuracy.
+It analyzes voice patterns, linguistic indicators, and behavioral red flags to identify potential voice cloning.
+Always verify suspicious calls through official channels using known contact information.
 JagaCall and ILMU are not responsible for decisions made based on this analysis.''';
   }
 
@@ -282,32 +296,32 @@ JagaCall and ILMU are not responsible for decisions made based on this analysis.
     return _sampleVoiceScams;
   }
 
-  /// Create backend request payload for ILMU voice analysis
+  /// Create backend request payload for ILMU deepfake voice analysis
   Map<String, dynamic> createILMUVoicePayload(String transcript) {
     return {
-      'model': 'ILMU-text',
+      'model': 'ILMU-deepfake',
       'api_key': _apiKey,
       'messages': [
         {
           'role': 'system',
-          'content': '''You are ILMU, an AI assistant from Malaysia specializing in voice scam detection.
+          'content': '''You are ILMU, an AI assistant from Malaysia specializing in AI deepfake voice detection.
 
-Analyze this voice transcript for scam indicators focusing on Malaysian context:
-- Authority impersonation (Bank Negara, PDRM, LHDN, JPJ, etc.)
-- Urgency tactics (sekarang, segera, immediately)
-- Emotional manipulation (family emergency, accidents)
-- Financial requests (OTP, money transfer, payment)
-- Threats (arrest, legal action, account suspension)
+Analyze this voice transcript for deepfake scam indicators focusing on Malaysian context:
+- Fake family emergency calls (accidents, hospital, urgent money needs)
+- Fake police/authority calls (PDRM, LHDN, Bank Negara impersonation)
+- Fake bank verification calls (OTP requests, account suspension threats)
+- Voice pattern analysis (unnatural pitch, lack of emotion, robotic speech)
 
-Provide risk assessment and recommendations.'''
+Provide confidence-based risk assessment: Low Risk / Suspicious / High Risk / Likely Voice Clone
+Include specific safety advice for each scenario.'''
         },
         {
           'role': 'user',
-          'content': 'Voice transcript analysis: "$transcript"'
+          'content': 'Deepfake voice analysis: "$transcript"'
         }
       ],
-      'max_tokens': 400,
-      'temperature': 0.2
+      'max_tokens': 500,
+      'temperature': 0.1
     };
   }
 }
