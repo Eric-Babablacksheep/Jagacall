@@ -18,25 +18,28 @@ class VoiceAnalysisWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildRiskLevelCard(),
+          _buildRiskLevelCard(context),
           const SizedBox(height: 16),
-          _buildTranscriptCard(),
+          _buildTranscriptCard(context),
           const SizedBox(height: 16),
-          _buildAnalysisDetails(),
+          _buildAnalysisDetails(context),
           const SizedBox(height: 16),
-          _buildRecommendedAction(),
+          _buildRecommendedAction(context),
           const SizedBox(height: 16),
-          _buildDisclaimer(),
+          _buildDisclaimer(context),
           if (onAnalyzeAnother != null) ...[
             const SizedBox(height: 24),
-            _buildAnalyzeAnotherButton(),
+            _buildAnalyzeAnotherButton(context),
           ],
         ],
       ),
     );
   }
 
-  Widget _buildRiskLevelCard() {
+  Widget _buildRiskLevelCard(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
     Color cardColor;
     Color textColor;
     IconData iconData;
@@ -44,127 +47,178 @@ class VoiceAnalysisWidget extends StatelessWidget {
 
     switch (analysis.riskLevel) {
       case VoiceRiskLevel.scam:
-        cardColor = Colors.red.shade50;
-        textColor = Colors.red.shade900;
+        cardColor = colorScheme.errorContainer;
+        textColor = colorScheme.error;
         iconData = Icons.dangerous;
-        title = 'HIGH RISK - SCAM DETECTED';
+        title = 'LIKELY VOICE CLONE';
         break;
       case VoiceRiskLevel.highRisk:
-        cardColor = Colors.orange.shade50;
-        textColor = Colors.orange.shade900;
+        cardColor = colorScheme.secondaryContainer;
+        textColor = colorScheme.secondary;
         iconData = Icons.warning;
-        title = 'HIGH RISK - SUSPICIOUS';
+        title = 'HIGH RISK';
         break;
       case VoiceRiskLevel.suspicious:
-        cardColor = Colors.yellow.shade50;
-        textColor = Colors.yellow.shade900;
+        cardColor = colorScheme.tertiaryContainer;
+        textColor = colorScheme.tertiary;
         iconData = Icons.priority_high;
         title = 'SUSPICIOUS';
         break;
       case VoiceRiskLevel.safe:
-        cardColor = Colors.green.shade50;
-        textColor = Colors.green.shade900;
+        cardColor = colorScheme.primaryContainer;
+        textColor = colorScheme.primary;
         iconData = Icons.check_circle;
-        title = 'APPEARS SAFE';
+        title = 'LOW RISK';
         break;
     }
 
     return Card(
-      color: cardColor,
       elevation: 4,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Icon(iconData, color: textColor, size: 32),
-                const SizedBox(width: 12),
-                Expanded(
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          gradient: LinearGradient(
+            colors: [
+              cardColor,
+              cardColor.withOpacity(0.8),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Icon(iconData, color: textColor, size: 40),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: textColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (analysis.scamType != VoiceScamType.none) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            _getScamTypeDisplay(analysis.scamType),
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: textColor,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface.withOpacity(0.8),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Confidence Level',
+                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          '${analysis.confidenceScore.toInt()}%',
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            color: textColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    _buildConfidenceBar(colorScheme, context),
+                  ],
+                ),
+              ),
+              if (analysis.isDemoMode) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: colorScheme.secondary.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                   child: Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 18,
+                    'AI DEEPFAKE DETECTION (DEMO)',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: colorScheme.secondary,
                       fontWeight: FontWeight.bold,
-                      color: textColor,
                     ),
                   ),
                 ),
               ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildConfidenceBar(),
-                ),
-                const SizedBox(width: 16),
-                Text(
-                  '${analysis.confidenceScore.toInt()}%',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: textColor,
-                  ),
-                ),
-              ],
-            ),
-            if (analysis.scamType != VoiceScamType.none) ...[
-              const SizedBox(height: 8),
-              Text(
-                'Type: ${_getScamTypeDisplay(analysis.scamType)}',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: textColor,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
             ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildConfidenceBar() {
-    return Container(
-      height: 8,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(4),
-        color: Colors.grey.shade300,
-      ),
-      child: FractionallySizedBox(
-        alignment: Alignment.centerLeft,
-        widthFactor: analysis.confidenceScore / 100,
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(4),
-            color: _getConfidenceColor(analysis.confidenceScore),
           ),
         ),
       ),
     );
   }
 
-  Color _getConfidenceColor(double confidence) {
-    if (confidence >= 80) return Colors.red;
-    if (confidence >= 60) return Colors.orange;
-    if (confidence >= 40) return Colors.yellow;
-    return Colors.green;
+  Widget _buildConfidenceBar(ColorScheme colorScheme, BuildContext context) {
+    return Container(
+      height: 12,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(6),
+        color: colorScheme.surfaceVariant,
+      ),
+      child: FractionallySizedBox(
+        alignment: Alignment.centerLeft,
+        widthFactor: analysis.confidenceScore / 100,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(6),
+            gradient: LinearGradient(
+              colors: [
+                _getConfidenceColor(analysis.confidenceScore, context),
+                _getConfidenceColor(analysis.confidenceScore, context).withOpacity(0.8),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Color _getConfidenceColor(double confidence, BuildContext context) {
+    final theme = Theme.of(context);
+    if (confidence >= 80) return theme.colorScheme.error;
+    if (confidence >= 60) return theme.colorScheme.secondary;
+    if (confidence >= 40) return theme.colorScheme.tertiary;
+    return theme.colorScheme.primary;
   }
 
   String _getScamTypeDisplay(VoiceScamType type) {
     switch (type) {
-      case VoiceScamType.impersonation:
-        return 'Authority Impersonation';
-      case VoiceScamType.urgency:
-        return 'Urgency Tactics';
-      case VoiceScamType.emotionalManipulation:
-        return 'Emotional Manipulation';
-      case VoiceScamType.financialRequest:
-        return 'Financial Request';
-      case VoiceScamType.threat:
-        return 'Threat/Intimidation';
+      case VoiceScamType.familyEmergency:
+        return 'Fake Family Emergency';
+      case VoiceScamType.authorityImpersonation:
+        return 'Fake Authority Call';
+      case VoiceScamType.bankVerification:
+        return 'Fake Bank Verification';
       case VoiceScamType.other:
         return 'Other Suspicious Activity';
       case VoiceScamType.none:
@@ -172,7 +226,8 @@ class VoiceAnalysisWidget extends StatelessWidget {
     }
   }
 
-  Widget _buildTranscriptCard() {
+  Widget _buildTranscriptCard(BuildContext context) {
+    final theme = Theme.of(context);
     return Card(
       elevation: 2,
       child: Padding(
@@ -199,9 +254,11 @@ class VoiceAnalysisWidget extends StatelessWidget {
               child: Text(
                 analysis.transcript,
                 style: const TextStyle(
-                  fontSize: 14,
-                  height: 1.4,
+                  fontSize: 13,
+                  height: 1.3,
                 ),
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -210,38 +267,113 @@ class VoiceAnalysisWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildAnalysisDetails() {
+  Widget _buildAnalysisDetails(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Card(
       elevation: 2,
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Analysis Details',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+            Row(
+              children: [
+                Icon(
+                  Icons.analytics,
+                  color: colorScheme.primary,
+                  size: 24,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Analysis Results',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
+            if (analysis.voiceIndicators.isNotEmpty) ...[
+              _buildVoiceIndicatorsSection(colorScheme, context),
+              const SizedBox(height: 16),
+            ],
             if (analysis.linguisticRedFlags.isNotEmpty) ...[
-              _buildFlagSection('Linguistic Red Flags:', analysis.linguisticRedFlags, Colors.red),
-              const SizedBox(height: 12),
+              _buildFlagSection('Linguistic Red Flags:', analysis.linguisticRedFlags, colorScheme.error, context),
+              const SizedBox(height: 16),
             ],
             if (analysis.behavioralRedFlags.isNotEmpty) ...[
-              _buildFlagSection('Behavioral Red Flags:', analysis.behavioralRedFlags, Colors.orange),
-              const SizedBox(height: 12),
+              _buildFlagSection('Behavioral Red Flags:', analysis.behavioralRedFlags, colorScheme.secondary, context),
+              const SizedBox(height: 16),
             ],
-            _buildMetadataSection(),
+            _buildMetadataSection(colorScheme, context),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildFlagSection(String title, List<String> flags, Color color) {
+  Widget _buildVoiceIndicatorsSection(ColorScheme colorScheme, BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.tertiaryContainer.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colorScheme.tertiary.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.graphic_eq,
+                color: colorScheme.tertiary,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Voice Analysis',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.tertiary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...analysis.voiceIndicators.map((indicator) => Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.fiber_manual_record,
+                  size: 8,
+                  color: colorScheme.tertiary,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    indicator,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurface,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          )),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFlagSection(String title, List<String> flags, Color color, BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -268,7 +400,9 @@ class VoiceAnalysisWidget extends StatelessWidget {
               Expanded(
                 child: Text(
                   flag,
-                  style: const TextStyle(fontSize: 13),
+                  style: const TextStyle(fontSize: 12),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -278,37 +412,50 @@ class VoiceAnalysisWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildMetadataSection() {
+  Widget _buildMetadataSection(ColorScheme colorScheme, BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.blue.shade50,
-        borderRadius: BorderRadius.circular(8),
+        color: colorScheme.primaryContainer.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Analysis Information',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Colors.blue.shade900,
-            ),
+          Row(
+            children: [
+              Icon(
+                Icons.info_outline,
+                color: colorScheme.primary,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Information',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.primary,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          _buildMetadataRow('Model:', analysis.analysisModel),
-          _buildMetadataRow('Timestamp:', _formatDateTime(analysis.timestamp)),
+          const SizedBox(height: 12),
+          _buildMetadataRow('AI Model:', analysis.analysisModel, colorScheme, context),
+          _buildMetadataRow('Timestamp:', _formatDateTime(analysis.timestamp), colorScheme, context),
+          if (analysis.recordingDuration != null)
+            _buildMetadataRow('Duration:', '${analysis.recordingDuration!.inSeconds}s', colorScheme, context),
+          if (analysis.audioFilePath != null)
+            _buildMetadataRow('Source:', 'Audio File', colorScheme, context),
           if (analysis.isDemoMode)
-            _buildMetadataRow('Mode:', 'Demo Mode', Colors.orange),
+            _buildMetadataRow('Mode:', 'Prototype Demo', colorScheme, context),
         ],
       ),
     );
   }
 
-  Widget _buildMetadataRow(String label, String value, [Color? valueColor]) {
+  Widget _buildMetadataRow(String label, String value, ColorScheme colorScheme, BuildContext context, [Color? valueColor]) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -316,20 +463,24 @@ class VoiceAnalysisWidget extends StatelessWidget {
             width: 80,
             child: Text(
               label,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: colorScheme.onSurface.withOpacity(0.7),
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           const Text(': '),
           Expanded(
             child: Text(
               value,
-              style: TextStyle(
-                fontSize: 12,
-                color: valueColor,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: valueColor ?? colorScheme.onSurface,
+                fontWeight: FontWeight.w500,
               ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -337,49 +488,72 @@ class VoiceAnalysisWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildRecommendedAction() {
+  Widget _buildRecommendedAction(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Card(
-      color: Colors.blue.shade50,
-      elevation: 3,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.lightbulb,
-                  color: Colors.blue.shade900,
-                  size: 24,
+      elevation: 4,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          gradient: LinearGradient(
+            colors: [
+              colorScheme.primary,
+              colorScheme.primary.withOpacity(0.8),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.security,
+                    color: colorScheme.onPrimary,
+                    size: 28,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Safety Advice',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: colorScheme.onPrimary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: colorScheme.onPrimary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  'Recommended Action',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue.shade900,
+                child: Text(
+                  analysis.recommendedAction,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onPrimary,
+                    height: 1.4,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              analysis.recommendedAction,
-              style: const TextStyle(
-                fontSize: 14,
-                height: 1.4,
-                fontWeight: FontWeight.w500,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildDisclaimer() {
+  Widget _buildDisclaimer(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
@@ -423,17 +597,24 @@ class VoiceAnalysisWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildAnalyzeAnotherButton() {
+  Widget _buildAnalyzeAnotherButton(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return SizedBox(
       width: double.infinity,
-      child: ElevatedButton.icon(
+      child: FilledButton.icon(
         onPressed: onAnalyzeAnother,
         icon: const Icon(Icons.mic),
         label: const Text('Analyze Another Voice'),
-        style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          backgroundColor: Colors.blue,
-          foregroundColor: Colors.white,
+        style: FilledButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          backgroundColor: colorScheme.primary,
+          foregroundColor: colorScheme.onPrimary,
+          textStyle: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );
