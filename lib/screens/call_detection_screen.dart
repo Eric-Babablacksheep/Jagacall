@@ -300,22 +300,17 @@ class _CallDetectionScreenState extends State<CallDetectionScreen>
           ],
         ),
         backgroundColor: backgroundColor,
-        duration: const Duration(seconds: 4),
+        duration: const Duration(seconds: 8), // Increased duration to give user time to read
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
         margin: const EdgeInsets.all(16),
         action: SnackBarAction(
-          label: 'View Details',
+          label: 'Dismiss',
           textColor: Colors.white,
           onPressed: () {
-            // Scroll to results
-            Scrollable.ensureVisible(
-              context,
-              duration: const Duration(milliseconds: 500),
-              curve: Curves.easeInOut,
-            );
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
           },
         ),
       ),
