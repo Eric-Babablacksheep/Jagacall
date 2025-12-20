@@ -49,6 +49,12 @@ dependencies:
   
   # File picker for audio file selection
   file_picker: ^8.0.3
+  
+  # Notifications for background file monitoring
+  flutter_local_notifications: ^17.2.2
+  
+  # Background service for file monitoring (temporarily disabled due to compatibility issues)
+  # workmanager: ^0.5.2
 
 dev_dependencies:
   flutter_test:
